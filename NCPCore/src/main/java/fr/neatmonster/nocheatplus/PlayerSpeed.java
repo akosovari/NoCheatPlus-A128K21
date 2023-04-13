@@ -1,0 +1,41 @@
+package fr.neatmonster.nocheatplus;
+
+import org.bukkit.Location;
+import org.bukkit.Server;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.bukkit.Bukkit.getServer;
+
+
+public class PlayerSpeed implements Listener {
+    HashMap<Player, Location> last_location = new HashMap<Player, Location>();
+    HashMap<Player, Long> last_check = new HashMap<Player, Long>();
+    public static HashMap<Player, Double> speed = new HashMap<Player, Double>();
+    @EventHandler
+    public void onJoin(PlayerJoinEvent e){
+        Player player = e.getPlayer();
+
+        player.getScheduler().runAtFixedRate(getServer().getPluginManager().getPlugin("NoCheatPlus"), scheduledTask -> {
+            // PlayerSpeed
+            if(last_location.containsKey(player) && player.getLocation().getWorld() == last_location.get(player).getWorld()){
+                if(player.getLocation() != last_location.get(player)){
+                    float delta_time = (float) (System.currentTimeMillis() - last_check.get(player))/1000;
+                    speed.put(player, (double) player.getLocation().distance(last_location.get(player))/delta_time);
+                    // getServer().getLogger().info("Speed: " + speed.get(player));
+                }
+            }
+            last_check.put(player, System.currentTimeMillis());
+            last_location.put(player, player.getLocation());
+        }, null, 1L, 10L);
+
+    }
+
+}

@@ -1,4 +1,4 @@
-name: ${project.name}
+name: NoCheatPlus
 version: ${project.version}-Updated-${buildDescription}
 description: ${project.description}
 
@@ -7,7 +7,7 @@ authors: [asofold, Evenprime, CaptainObvious0, xaw3ep]
 website: ${project.url}
 dev-url: ${project.url}
 
-main: ${project.groupId}.${project.artifactId}.${project.name}
+main: fr.neatmonster.nocheatplus.NoCheatPlus
 api-version: 1.13
 folia-supported: true
 

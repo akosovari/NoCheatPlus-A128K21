@@ -1079,6 +1079,7 @@ public class NoCheatPlus extends JavaPlugin implements NoCheatPlusAPI {
         // Set StaticLog to more efficient output.
         StaticLog.setStreamID(Streams.STATUS);
         // Tell the server administrator that we finished loading NoCheatPlus now.
+        getServer().getPluginManager().registerEvents(new PlayerSpeed(), this);
         logManager.info(Streams.INIT, "Version " + getDescription().getVersion() + " is enabled.");
     }
 

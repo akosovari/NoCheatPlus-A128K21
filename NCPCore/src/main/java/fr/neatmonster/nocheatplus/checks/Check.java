@@ -14,9 +14,9 @@
  */
 package fr.neatmonster.nocheatplus.checks;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
+import fr.neatmonster.nocheatplus.PlayerSpeed;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -69,7 +69,7 @@ import fr.neatmonster.nocheatplus.worlds.IWorldData;
  * <li>In case simplicity of code is demanded, just check isEnabled(player) or
  * for better performance isEnabled(player, data, config), before running the
  * actual check.</li>
- * 
+ *
  */
 // TODO: javadocs redo (above)
 public abstract class Check implements IDebugPlayer {
@@ -80,7 +80,7 @@ public abstract class Check implements IDebugPlayer {
 
     /**
      * Gets the player's history.
-     * 
+     *
      * @param player
      *            the player
      * @return the history
@@ -99,7 +99,7 @@ public abstract class Check implements IDebugPlayer {
 
     /**
      * Instantiates a new check.
-     * 
+     *
      * @param type
      *            the type
      */
@@ -113,7 +113,7 @@ public abstract class Check implements IDebugPlayer {
 
     /**
      * Execute actions, thread-safe.<br>
-     * 
+     *
      * @param player
      *            The player who failed a check.
      * @param vL
@@ -134,7 +134,7 @@ public abstract class Check implements IDebugPlayer {
 
     /**
      * Execute actions, thread-safe.<br>
-     * 
+     *
      * @param player
      *            The player who failed a check.
      * @param vL
@@ -152,12 +152,66 @@ public abstract class Check implements IDebugPlayer {
 
     /**
      * Execute actions, thread safe.
-     * 
+     *
      * @param violationData
      *            the violation data
      * @return The ViolationData instanced passed to this method.
      */
+    public static HashMap<Player, Long> last_vl_canceled = new HashMap<Player, Long>();
     public ViolationData executeActions(final ViolationData violationData) {
+        // Elytra
+        Set<CheckType> disabled_on_glide = new HashSet<CheckType>();
+        disabled_on_glide.add(CheckType.MOVING);
+        disabled_on_glide.add(CheckType.MOVING_SURVIVALFLY);
+        disabled_on_glide.add(CheckType.MOVING_CREATIVEFLY);
+        // Vehicle
+        Set<CheckType> disabled_in_vehicle = new HashSet<CheckType>();
+        disabled_on_glide.add(CheckType.MOVING_VEHICLE);
+        // Removed checks
+        Set<CheckType> disabled_checks = new HashSet<CheckType>();
+        disabled_checks.add(CheckType.CHAT_RELOG);
+        disabled_checks.add(CheckType.CHAT);
+        disabled_checks.add(CheckType.CHAT_TEXT);
+        disabled_checks.add(CheckType.BLOCKINTERACT_VISIBLE);
+        disabled_checks.add(CheckType.BLOCKINTERACT_DIRECTION);
+        disabled_checks.add(CheckType.BLOCKINTERACT_SPEED);
+
+        disabled_checks.add(CheckType.BLOCKPLACE);
+        disabled_checks.add(CheckType.BLOCKPLACE_DIRECTION);
+        disabled_checks.add(CheckType.BLOCKPLACE_NOSWING);
+        disabled_checks.add(CheckType.BLOCKPLACE_SCAFFOLD);
+        disabled_checks.add(CheckType.BLOCKPLACE_FASTPLACE);
+        // Elytra
+        //  && 0.0 != PlayerSpeed.current_bps.get(violationData.player.getUniqueId())
+        if ((disabled_on_glide.contains(violationData.check.type)) && violationData.player.isGliding() && 35 > PlayerSpeed.speed.get(violationData.player) && System.currentTimeMillis() - last_vl_canceled.get(violationData.player) > 1000) {
+            //violationData.forceCancel();
+            violationData.preventCancel();
+            // Bukkit.broadcastMessage("Speed: "+ PlayerSpeed.current_bps.get(violationData.player.getUniqueId()));
+            // Bukkit.broadcastMessage("Vertical: "+ PlayerSpeed.current_y_bps.get(violationData.player.getUniqueId()));
+
+
+        }
+        // Vehicle
+        if ((violationData.check.type == CheckType.MOVING_VEHICLE || violationData.check.type == CheckType.MOVING_VEHICLE_MOREPACKETS) && violationData.player.isInsideVehicle() && 20 > PlayerSpeed.speed.get(violationData.player)  && System.currentTimeMillis() - last_vl_canceled.get(violationData.player) > 1000) {
+            //violationData.forceCancel();
+            violationData.preventCancel();
+            // Bukkit.broadcastMessage("Speed: "+ PlayerSpeed.current_bps.get(violationData.player.getUniqueId()));
+            //Bukkit.broadcastMessage("Vertical: "+ PlayerSpeed.current_y_bps.get(violationData.player.getUniqueId()));
+        }
+
+        // Removed checks
+        if(disabled_checks.contains(violationData.check.type)) {
+            //violationData.forceCancel();
+            violationData.preventCancel();
+        }
+
+        if(violationData.willCancel()){
+            last_vl_canceled.put(violationData.player, System.currentTimeMillis());
+        }
+        // EndOfMYSHIT
+
+
+
 
         // Dispatch the VL processing to the hook manager (now thread safe).
         if (NCPHookManager.shouldCancelVLProcessing(violationData)) {
@@ -179,7 +233,7 @@ public abstract class Check implements IDebugPlayer {
 
     /**
      * Gets the type of the check.
-     * 
+     *
      * @return the type
      */
     public CheckType getType() {
@@ -188,20 +242,20 @@ public abstract class Check implements IDebugPlayer {
 
     /**
      * Full activation check (configuration, exemption, permission).
-     * 
+     *
      * @param player
      * @param data
      * @param worldData
      * @return
      */
-    public boolean isEnabled(final Player player, final IPlayerData pData, 
-            final IWorldData worldData) {
+    public boolean isEnabled(final Player player, final IPlayerData pData,
+                             final IWorldData worldData) {
         return pData.isCheckActive(type, player, worldData);
     }
 
     /**
      * Full activation check (configuration, exemption, permission).
-     * 
+     *
      * @param player
      * @param data
      * @return
@@ -212,7 +266,7 @@ public abstract class Check implements IDebugPlayer {
 
     /**
      * Full activation check (configuration, exemption, permission).
-     * 
+     *
      * @param player
      *            the player
      * @return true, if the check is enabled
