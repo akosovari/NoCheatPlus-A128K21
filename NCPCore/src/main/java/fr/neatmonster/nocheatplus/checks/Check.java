@@ -18,6 +18,7 @@ import java.util.*;
 
 import fr.neatmonster.nocheatplus.PlayerSpeed;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import fr.neatmonster.nocheatplus.NCPAPIProvider;
@@ -175,7 +176,6 @@ public abstract class Check implements IDebugPlayer {
         disabled_checks.add(CheckType.BLOCKINTERACT_VISIBLE);
         disabled_checks.add(CheckType.BLOCKINTERACT_DIRECTION);
         disabled_checks.add(CheckType.BLOCKINTERACT_SPEED);
-
         disabled_checks.add(CheckType.BLOCKPLACE);
         disabled_checks.add(CheckType.BLOCKPLACE_DIRECTION);
         disabled_checks.add(CheckType.BLOCKPLACE_NOSWING);
@@ -204,6 +204,11 @@ public abstract class Check implements IDebugPlayer {
             //violationData.forceCancel();
             violationData.preventCancel();
         }
+        // Disable on portal
+        if(PlayerSpeed.in_block.get(violationData.player) == Material.NETHER_PORTAL && 10 > PlayerSpeed.speed.get(violationData.player)){
+            violationData.preventCancel();
+        }
+
 
         if(violationData.willCancel()){
             last_vl_canceled.put(violationData.player, System.currentTimeMillis());

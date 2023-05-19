@@ -16,6 +16,8 @@ package fr.neatmonster.nocheatplus.checks.moving.player;
 
 import java.util.Random;
 
+import fr.neatmonster.nocheatplus.checks.moving.util.MovingUtil;
+import fr.neatmonster.nocheatplus.compat.*;
 import fr.neatmonster.nocheatplus.components.registry.feature.TickListener;
 import fr.neatmonster.nocheatplus.utilities.TickTask;
 import org.bukkit.Bukkit;
@@ -43,16 +45,10 @@ import fr.neatmonster.nocheatplus.checks.moving.MovingData;
 import fr.neatmonster.nocheatplus.checks.moving.magic.Magic;
 import fr.neatmonster.nocheatplus.checks.moving.model.LocationData;
 import fr.neatmonster.nocheatplus.checks.moving.model.PlayerMoveData;
-import fr.neatmonster.nocheatplus.compat.Bridge1_13;
-import fr.neatmonster.nocheatplus.compat.Bridge1_9;
-import fr.neatmonster.nocheatplus.compat.BridgeEnchant;
-import fr.neatmonster.nocheatplus.compat.BridgeHealth;
-import fr.neatmonster.nocheatplus.compat.BridgeMaterial;
 import fr.neatmonster.nocheatplus.compat.versions.ServerVersion;
 import fr.neatmonster.nocheatplus.players.IPlayerData;
 import fr.neatmonster.nocheatplus.utilities.ReflectionUtil;
 import fr.neatmonster.nocheatplus.utilities.location.PlayerLocation;
-import fr.neatmonster.nocheatplus.utilities.map.BlockProperties;
 import fr.neatmonster.nocheatplus.utilities.map.BlockFlags;
 import fr.neatmonster.nocheatplus.utilities.map.MaterialUtil;
 
@@ -116,8 +112,7 @@ public class NoFall extends Check {
         // Damage to be dealt.
         final float fallDist = (float) getApplicableFallHeight(player, y, previousSetBackY, data);
         double maxD = getDamage(fallDist);
-        maxD = calcDamagewithfeatherfalling(player, calcReducedDamageByBlock(player, data, maxD), 
-                                            mcAccess.getHandle().dealFallDamageFiresAnEvent().decide());
+        maxD = calcDamagewithfeatherfalling(player, calcReducedDamageByBlock(player, data, maxD), mcAccess.getHandle().dealFallDamageFiresAnEvent().decide());
         fallOn(player, fallDist);
 
         if (maxD >= Magic.FALL_DAMAGE_MINIMUM) {
@@ -135,7 +130,15 @@ public class NoFall extends Check {
                 // TODO: might not be necessary: if (mcPlayer.invulnerableTicks <= 0)  [no damage event for resetting]
                 // TODO: Detect fake fall distance accumulation here as well.
                 data.noFallSkipAirCheck = true;
-                dealFallDamage(player, maxD);
+
+                Material m = player.getLocation().getBlock().getType();
+                if(m==Material.NETHER_PORTAL){
+                    player.setFallDistance(0);
+                    data.clearNoFallData();
+                } else {
+                    dealFallDamage(player, maxD);
+                }
+
             }
         }
         else {
