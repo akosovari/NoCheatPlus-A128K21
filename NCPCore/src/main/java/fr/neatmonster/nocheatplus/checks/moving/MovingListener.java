@@ -560,7 +560,10 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
             ) {
             // 0: Fire move from -> to
             moveInfo.set(player, from, to, cc.yOnGround);
-            checkPlayerMove(player, from, to, 0, moveInfo, debug, data, cc, pData, event);
+            // checkPlayerMove(player, from, to, 0, moveInfo, debug, data, cc, pData, event);
+            try {
+                checkPlayerMove(player, from, to, 0, moveInfo, debug, data, cc, pData, event);
+            } catch (java.lang.IllegalStateException ex) {} catch (java.lang.Throwable ex) {}
         }
         else {
             // (Special case: Location has not been updated last moving event.)
@@ -2426,8 +2429,11 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
 
         final IPlayerData pData = DataManager.getPlayerData(player);
         if (!pData.isCheckActive(CheckType.MOVING, player)) return;
+        try {
         dataOnJoin(player, player.getLocation(useLoc), false, pData.getGenericInstance(MovingData.class), 
                   pData.getGenericInstance(MovingConfig.class), pData.isDebugActive(checkType));
+        } catch (java.lang.IllegalStateException ex) {
+        } catch (java.lang.NullPointerException ex) {}
         // Cleanup.
         useLoc.setWorld(null);
     }
@@ -2451,7 +2457,7 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
         final int tick = TickTask.getTick();
         final String tag = isRespawn ? "Respawn" : "Join";
         // Check loaded chunks.
-        if (cc.loadChunksOnJoin) {
+        if (cc.loadChunksOnJoin && false) {
             // (Don't use past-move heuristic for skipping here.)
             final int loaded = MapUtil.ensureChunksLoaded(loc.getWorld(), loc.getX(), loc.getZ(), Magic.CHUNK_LOAD_MARGIN_MIN);
             if (loaded > 0 && debug) {
@@ -2462,7 +2468,7 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
         // Correct set back on join.
         if (!data.hasSetBack() || !data.hasSetBackWorldChanged(loc)) {
             data.clearFlyData();
-            data.setSetBack(loc);
+            // data.setSetBack(loc);
             // (resetPositions is called below)
             data.joinOrRespawn = true; // TODO: Review if to always set (!).
         }
@@ -2484,7 +2490,7 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
         data.sfHorizontalBuffer = cc.hBufMax;
 
         // Enforcing the location.
-        if (cc.enforceLocation) {
+        if (cc.enforceLocation && false) {
             playersEnforce.add(player.getName());
         }
 
@@ -2643,7 +2649,7 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
 
     @Override
     public void onTick(final int tick, final long timeLast) {
-
+        if(true) return;
         // TODO: Change to per world checking (as long as configs are per world).
         // Legacy: enforcing location consistency.
         if (!playersEnforce.isEmpty()) checkOnTickPlayersEnforce();

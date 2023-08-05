@@ -541,7 +541,11 @@ public class TickTask implements Runnable {
             }
             catch(Throwable t) {
                 StaticLog.logSevere("(TickTask) TickListener generated an exception:");
-                StaticLog.logSevere(t);
+                java.io.StringWriter sw = new java.io.StringWriter();
+                java.io.PrintWriter pw = new java.io.PrintWriter(sw);
+                t.printStackTrace(pw);
+                String sStackTrace = sw.toString(); // stack trace as a string
+                StaticLog.logSevere(sStackTrace);
             }
         }
     }

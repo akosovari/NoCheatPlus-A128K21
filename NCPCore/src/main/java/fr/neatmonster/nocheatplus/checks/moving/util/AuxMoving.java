@@ -111,6 +111,7 @@ public class AuxMoving implements IRegisterAsGenericInstance {
      * @param cc
      */
     public synchronized void resetPositionsAndMediumProperties(final Player player, final Location loc, final MovingData data, final MovingConfig cc) {
+        if (loc == null || loc.getWorld() == null) return;
         final PlayerMoveInfo moveInfo = usePlayerMoveInfo();
         moveInfo.set(player, loc, null, cc.yOnGround);
         data.resetPlayerPositions(moveInfo.from);

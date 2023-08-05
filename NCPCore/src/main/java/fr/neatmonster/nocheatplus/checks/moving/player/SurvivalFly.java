@@ -359,8 +359,8 @@ public class SurvivalFly extends Check {
         double vAllowedDistance = 0, vDistanceAboveLimit = 0;
         
         // Wild-card: allow step height from ground to ground, if not on/in a medium already.
-        if (yDistance >= 0.0 && yDistance <= cc.sfStepHeight 
-            && toOnGround && fromOnGround && !from.isResetCond()) {
+        if (yDistance >= 0.0 && yDistance <= cc.sfStepHeight
+                && toOnGround && fromOnGround/* && !from.isResetCond()*/) {
             vAllowedDistance = cc.sfStepHeight;
             thisMove.allowstep = true;
             tags.add("groundstep");

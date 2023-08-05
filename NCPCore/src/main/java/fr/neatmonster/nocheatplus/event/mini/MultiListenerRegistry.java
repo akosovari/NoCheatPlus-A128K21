@@ -82,7 +82,7 @@ public abstract class MultiListenerRegistry<EB, P> extends MiniListenerRegistry<
                 method.invoke(listener, event);
             }
             catch (InvocationTargetException e) {
-                onException(event, e);
+                // onException(event, e);
             }
             catch (IllegalArgumentException e) {
                 onException(event, e);

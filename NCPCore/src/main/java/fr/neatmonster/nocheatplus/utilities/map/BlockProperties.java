@@ -67,6 +67,8 @@ import fr.neatmonster.nocheatplus.utilities.collision.PassableRayTracing;
 import fr.neatmonster.nocheatplus.utilities.location.PlayerLocation;
 import fr.neatmonster.nocheatplus.utilities.map.BlockCache.IBlockCacheNode;
 
+import static org.bukkit.Bukkit.getWorld;
+
 
 /**
  * Properties of blocks.

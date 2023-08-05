@@ -3,7 +3,7 @@ version: ${project.version}-Updated-${buildDescription}
 description: ${project.description}
 
 author: NeatMonster
-authors: [asofold, Evenprime, CaptainObvious0, xaw3ep]
+authors: [asofold, Evenprime, CaptainObvious0, xaw3ep, TheForgTN]
 website: ${project.url}
 dev-url: ${project.url}
 
