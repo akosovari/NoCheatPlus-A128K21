@@ -130,15 +130,6 @@ public class NoFall extends Check {
                 // TODO: might not be necessary: if (mcPlayer.invulnerableTicks <= 0)  [no damage event for resetting]
                 // TODO: Detect fake fall distance accumulation here as well.
                 data.noFallSkipAirCheck = true;
-
-                Material m = player.getLocation().getBlock().getType();
-                if(m==Material.NETHER_PORTAL){
-                    player.setFallDistance(0);
-                    data.clearNoFallData();
-                } else {
-                    dealFallDamage(player, maxD);
-                }
-
             }
         }
         else {
