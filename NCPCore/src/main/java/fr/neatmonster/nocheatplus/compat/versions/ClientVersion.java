@@ -59,10 +59,14 @@ public enum ClientVersion {
     V_1_18_2(758),
 
     V_1_19(759), V_1_19_1(760), V_1_19_3(761), V_1_19_4(762),
+    /**
+     * 1.20.1 has the same protocol version.
+     */
+    V_1_20(763),
 
 
     LOWER_THAN_KNOWN_VERSIONS(V_1_7_2.protocolID - 1, false),
-    HIGHER_THAN_KNOWN_VERSIONS(V_1_19_4.protocolID + 1, false),
+    HIGHER_THAN_KNOWN_VERSIONS(V_1_20.protocolID + 1, false),
     UNKNOWN(-1, false);
 
     private final int protocolID;

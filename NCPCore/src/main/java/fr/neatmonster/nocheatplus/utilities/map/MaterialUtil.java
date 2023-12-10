@@ -431,10 +431,18 @@ public class MaterialUtil {
     public static final Set<Material> WOODEN_SIGNS = Collections.unmodifiableSet(addBlocks(
             BridgeMaterial.getByPrefixAndSuffix(
                     woodTypes, 
-                    Arrays.asList("_sign"),
+                    Arrays.asList("_sign", "_hanging_sign"),
                     AlmostBoolean.YES
                     // , ...
                     ), "sign", "wall_sign"));
+    
+    // These are SOLID
+    public static final Set<Material> WALL_HANGING_SIGNS = Collections.unmodifiableSet(
+            BridgeMaterial.getByPrefixAndSuffix(
+                    woodTypes, 
+                    Arrays.asList("_wall_hanging_sign"),
+                    AlmostBoolean.YES
+                    ));
 
     public static final Set<Material> WOODEN_BUTTONS = Collections.unmodifiableSet(
             BridgeMaterial.getByPrefixAndSuffix(
@@ -532,7 +540,8 @@ public class MaterialUtil {
                     "spore_blossom", "small_dripleaf", "cave_vines", "cave_vines_plant",
                     "weeping_vines", "weeping_vines_plant",
                     "twisting_vines", "twisting_vines_plant",
-                    "mangrove_propagule", "pink_petals", "torchflower", "torchflower_crop"
+                    "mangrove_propagule", "pink_petals", "torchflower", "torchflower_crop",
+                    "pitcher_plant"
                     ),
             new HashSet<Material>(Arrays.asList(BridgeMaterial.TALL_GRASS, 
                     BridgeMaterial.WHEAT_CROPS, BridgeMaterial.CARROTS, 
@@ -647,7 +656,7 @@ public class MaterialUtil {
     }
     
     /**
-     * Check if is sign (wall included)
+     * Check if is a sign or wall sign
      * 
      * @param mat
      * @return
@@ -686,5 +695,16 @@ public class MaterialUtil {
      */
     public static boolean isFarmable(final Material mat) {
         return isSeedable(mat) || FARMABLE.contains(mat);
+    }
+    
+    /**
+     * Check if is the material is a sign of any kind (normal(post, wall, hanging, wall hanging)
+     * 
+     * @param mat
+     * @return 
+     */
+    public static boolean isAnySign(final Material mat) {
+        return WOODEN_SIGNS.contains(mat) // Includes hanging_sign
+              || WALL_HANGING_SIGNS.contains(mat);
     }
 }

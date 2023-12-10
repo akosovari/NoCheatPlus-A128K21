@@ -14,6 +14,7 @@
  */
 package fr.neatmonster.nocheatplus.compat.bukkit;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ import fr.neatmonster.nocheatplus.compat.blocks.init.BlockInit;
 import fr.neatmonster.nocheatplus.compat.bukkit.model.*;
 import fr.neatmonster.nocheatplus.compat.cbreflect.reflect.ReflectBase;
 import fr.neatmonster.nocheatplus.compat.cbreflect.reflect.ReflectDamageSource;
+import fr.neatmonster.nocheatplus.compat.cbreflect.reflect.ReflectDamageSources;
 import fr.neatmonster.nocheatplus.compat.cbreflect.reflect.ReflectLivingEntity;
 import fr.neatmonster.nocheatplus.config.WorldConfigProvider;
 import fr.neatmonster.nocheatplus.utilities.ReflectionUtil;
@@ -40,11 +42,13 @@ public class MCAccessBukkitModern extends MCAccessBukkit {
 
     protected ReflectBase reflectBase = null;
     protected ReflectDamageSource reflectDamageSource = null;
+    protected ReflectDamageSources reflectDamageSources = null;
     protected ReflectLivingEntity reflectLivingEntity = null;
     protected final Map<Material, BukkitShapeModel> shapeModels = new HashMap<Material, BukkitShapeModel>();
 
     // Blocks that can be fetched automatically from from the Bukkit API
-    private static final BukkitShapeModel MODEL_AUTO_FETCH = new BukkitFetchableBound();
+    private static final BukkitShapeModel MODEL_AUTO_FETCH = new BukkitFetchableBounds();
+    private static final BukkitShapeModel MODEL_AUTO_FETCH_LEGACY = new BukkitFetchableBound();
 
     // Blocks that are formed from multiple bounding boxes
     private static final BukkitShapeModel MODEL_BREWING_STAND = new BukkitStatic(
@@ -138,13 +142,15 @@ public class MCAccessBukkitModern extends MCAccessBukkit {
             this.reflectBase = new ReflectBase();
             this.reflectDamageSource = new ReflectDamageSource(this.reflectBase);
             this.reflectLivingEntity = new ReflectLivingEntity(this.reflectBase, null, this.reflectDamageSource);
+            // Can be null
+            this.reflectDamageSources = new ReflectDamageSources(this.reflectBase, this.reflectDamageSource);
         } 
         catch (ClassNotFoundException ex) {}
     }
 
     @Override
     public String getMCVersion() {
-        return "1.13-1.19|?";
+        return "1.13-1.20|?";
     }
 
     @Override
@@ -214,10 +220,20 @@ public class MCAccessBukkitModern extends MCAccessBukkit {
         // new flower, and others
         for (Material mat : BridgeMaterial.getAllBlocks(
             "azalea", "flowering_azalea",
-            "sculk_sensor", "pointed_dripstone",
-            "stonecutter", "chain", "pink_petals", "frogspawn",
-            "torchflower", "decorated_pot")) {
+            "sculk_sensor", "pointed_dripstone", "frogspawn",
+            "sniffer_egg", "decorated_pot", "pitcher_crop", "calibrated_sculk_sensor")) {
             addModel(mat, MODEL_AUTO_FETCH);
+        }
+        
+        // Wall hanging signs have a collision box. Hanging signs don't, so they are treated as an ordinary sign.
+        for (Material mat : MaterialUtil.WALL_HANGING_SIGNS) {
+            // Only the post has an actual collision box, the rest is all hit box. 
+            addModel(mat, MODEL_AUTO_FETCH);
+        }
+
+        for (Material mat : BridgeMaterial.getAllBlocks(
+            "stonecutter", "chain")) {
+            addModel(mat, MODEL_AUTO_FETCH_LEGACY);
         }
 
         // Camp fire
@@ -499,7 +515,7 @@ public class MCAccessBukkitModern extends MCAccessBukkit {
 
     private boolean canDealFallDamage() {
         return this.reflectLivingEntity != null && this.reflectLivingEntity.nmsDamageEntity != null 
-               && this.reflectDamageSource.nmsFALL != null;
+               && (this.reflectDamageSource.nmsFALL != null || this.reflectDamageSources != null);
     }
 
     @Override
@@ -512,7 +528,18 @@ public class MCAccessBukkitModern extends MCAccessBukkit {
         if (canDealFallDamage()) {
             Object handle = getHandle(player);
             if (handle != null) {
-                ReflectionUtil.invokeMethod(this.reflectLivingEntity.nmsDamageEntity, handle, this.reflectDamageSource.nmsFALL, (float) damage);
+                // Direct accessing DamageSource
+                Object damageSource = this.reflectDamageSource.nmsFALL;
+                if (damageSource == null) {
+                    // Fail, second attempt
+                    damageSource = this.reflectDamageSources.getDamageSource(handle);
+                    if (damageSource == null) {
+                        // Fail, deal generic damage
+                        BridgeHealth.damage(player, damage);
+                        return;
+                    }
+                }
+                ReflectionUtil.invokeMethod(this.reflectLivingEntity.nmsDamageEntity, handle, damageSource, (float) damage);
             }
         } 
         else BridgeHealth.damage(player, damage);

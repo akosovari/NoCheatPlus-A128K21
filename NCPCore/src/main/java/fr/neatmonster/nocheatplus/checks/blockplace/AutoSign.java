@@ -27,14 +27,12 @@ import fr.neatmonster.nocheatplus.actions.ParameterName;
 import fr.neatmonster.nocheatplus.checks.Check;
 import fr.neatmonster.nocheatplus.checks.CheckType;
 import fr.neatmonster.nocheatplus.checks.ViolationData;
-import fr.neatmonster.nocheatplus.compat.BridgeMaterial;
 import fr.neatmonster.nocheatplus.players.IPlayerData;
 import fr.neatmonster.nocheatplus.utilities.StringUtil;
 import fr.neatmonster.nocheatplus.utilities.TickTask;
 
 public class AutoSign extends Check {
 
-    // TODO: Make these configurable.
     /** Reference time that is needed to edit the most complicated sign :). */
     private static long maxEditTime = 1500;
     /** Fastest time "possible" estimate for an empty sign. */
@@ -51,45 +49,64 @@ public class AutoSign extends Check {
     public AutoSign() {
         super(CheckType.BLOCKPLACE_AUTOSIGN);
     }
-
-    public boolean check(final Player player, final Block block, final String[] lines,
-            final IPlayerData pData) {
-        // TODO: Might want to reset time + hash ?
-        final long time = System.currentTimeMillis();
+    
+    /**
+     * Checks a player
+     * 
+     * @param player
+     * @param block
+     * @param lines
+     * @param pData
+     * @param fakeNews This SignChangeEvent was triggered by player-editing, not by a newly placed sign.
+     * @return true if the player failed the check.
+     */
+    public boolean check(final Player player, final Block block, final String[] lines, final IPlayerData pData, final boolean fakeNews) {
         tags.clear();
+        final long time = System.currentTimeMillis();
         final BlockPlaceData data = pData.getGenericInstance(BlockPlaceData.class);
         final BlockPlaceConfig cc = pData.getGenericInstance(BlockPlaceConfig.class);
         Material mat = block.getType();
-        
         String s = mat.toString();
-        if (s.endsWith("_WALL_SIGN")) {
-        	s = s.replace("_WALL_SIGN", "_SIGN");
-        	mat = Material.getMaterial(s);
-        } else if (s.endsWith("WALL_SIGN")) {
-        	s = s.replace("WALL_", "");
-        	mat = Material.getMaterial(s);
+        if (s.endsWith("_WALL_HANGING_SIGN")) {
+            s = s.replace("WALL_HANGING", "HANGING");
+            // A "wooden_wall_hanging_sign" block is just an "wooden_hanging_sign" as an item.
+            mat = Material.getMaterial(s);
         }
-        if (s.equals("SIGN_POST")) {
-        	mat = Material.getMaterial("SIGN");
+        else if (s.endsWith("_WALL_SIGN")) {
+            s = s.replace("_WALL_SIGN", "_SIGN");
+            // a "wooden_wall_sign" block is just a "wooden_sign" as an item.
+            mat = Material.getMaterial(s);
+        } 
+        else if (s.endsWith("WALL_SIGN")) {
+            s = s.replace("WALL_", "");
+            // A "wall_sign" block is just a "sign" as an item.
+            mat = Material.getMaterial(s);
         }
-        if (data.autoSignPlacedHash != BlockPlaceListener.getBlockPlaceHash(block, mat)){
+        else if (s.equals("SIGN_POST")) {
+            mat = Material.getMaterial("SIGN");
+        }
+
+        if (pData.isDebugActive(CheckType.BLOCKPLACE_AUTOSIGN)) {
+            debug(player, "Block-place hash: " + BlockPlaceListener.getBlockPlaceHash(block, mat) + ", Material type: " + mat + " / " + s);
+        }
+
+        // Check hash match
+        if (data.autoSignPlacedHash != BlockPlaceListener.getBlockPlaceHash(block, mat) && !fakeNews) {
             tags.add("block_mismatch");
             return handleViolation(player, maxEditTime, data, cc);
         }
-        if (time < data.autoSignPlacedTime){
+
+        if (time < data.autoSignPlacedTime) {
             data.autoSignPlacedTime = 0;
             return false;
         }
-
-        // check time, mind lag.
-
+        // Check time, mind lag.
         final long editTime = time - data.autoSignPlacedTime;
         long expected = getExpectedEditTime(lines, cc.autoSignSkipEmpty);
         if (expected == 0) {
             return false;
         }
         expected = (long) (expected / TickTask.getLag(expected, true));
-
         if (expected > editTime){
             tags.add("edit_time");
             return handleViolation(player, expected - editTime, data, cc);
@@ -106,7 +123,7 @@ public class AutoSign extends Check {
                 if (!line.isEmpty()){
                     chars.clear();
                     n += 1;
-                    for (final char c : line.toCharArray()){
+                    for (final char c : line.toCharArray()) {
                         chars.add(c);
                     }
                     expected += minCharTime * chars.size();
@@ -116,7 +133,7 @@ public class AutoSign extends Check {
         if (skipEmpty && n == 0) {
             return 0;
         }
-        if (n > 1){
+        if (n > 1) {
             expected += minLineTime * n;
         }
         return expected;
@@ -129,16 +146,13 @@ public class AutoSign extends Check {
      * @param data
      * @return
      */
-    private boolean handleViolation(final Player player, final long violationTime, 
-            final BlockPlaceData data, final BlockPlaceConfig cc) {
+    private boolean handleViolation(final Player player, final long violationTime, final BlockPlaceData data, final BlockPlaceConfig cc) {
         final double addedVL = 10.0 * Math.min(maxEditTime, violationTime) / maxEditTime;
         data.autoSignVL += addedVL;
-        final ViolationData vd = new ViolationData(
-                this, player, data.autoSignVL, addedVL, cc.autoSignActions);
+        final ViolationData vd = new ViolationData(this, player, data.autoSignVL, addedVL, cc.autoSignActions);
         if (vd.needsParameters()){
             vd.setParameter(ParameterName.TAGS, StringUtil.join(tags, "+"));
         }
         return executeActions(vd).willCancel();
     }
-
 }
