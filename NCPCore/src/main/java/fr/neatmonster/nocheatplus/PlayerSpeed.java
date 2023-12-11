@@ -1,6 +1,12 @@
 package fr.neatmonster.nocheatplus;
 
+import fr.neatmonster.nocheatplus.checks.CheckType;
+import fr.neatmonster.nocheatplus.checks.moving.MovingConfig;
+import fr.neatmonster.nocheatplus.checks.moving.MovingData;
+import fr.neatmonster.nocheatplus.players.DataManager;
+import fr.neatmonster.nocheatplus.players.IPlayerData;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -23,8 +29,21 @@ public class PlayerSpeed implements Listener {
     public void onJoin(PlayerJoinEvent e){
         Player player = e.getPlayer();
 
+
         player.getScheduler().runAtFixedRate(getServer().getPluginManager().getPlugin("NoCheatPlus"), scheduledTask -> {
+
+
+
             // PlayerSpeed
+            // Maybe this helps with people teleporting through Multiverse portals having problems?
+            final IPlayerData pData = DataManager.getPlayerData(player);
+            final MovingData data_mov = pData.getGenericInstance(MovingData.class);
+            Material m = player.getLocation().getBlock().getType();
+            if(m == Material.NETHER_PORTAL || m== Material.END_PORTAL) {
+                data_mov.resetSetBack();
+            }
+
+
             if(last_location.containsKey(player) && player.getLocation().getWorld() == last_location.get(player).getWorld()){
                 if(player.getLocation() != last_location.get(player)){
                     float delta_time = (float) (System.currentTimeMillis() - last_check.get(player))/1000;
