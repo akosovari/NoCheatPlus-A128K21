@@ -22,6 +22,7 @@ import org.bukkit.entity.EntityType;
 
 import fr.neatmonster.nocheatplus.compat.Bridge1_13;
 import fr.neatmonster.nocheatplus.utilities.map.BlockCache;
+import fr.neatmonster.nocheatplus.utilities.map.BlockFlags;
 import fr.neatmonster.nocheatplus.utilities.map.BlockProperties;
 import fr.neatmonster.nocheatplus.utilities.map.MaterialUtil;
 
@@ -61,6 +62,11 @@ public class BlockCacheBukkit extends BlockCache {
 
     @Override
     public double[] fetchBounds(final int x, final int y, final int z){
+        Material mat = getType(x, y, z);
+        long flags = BlockFlags.getBlockFlags(mat);
+        if (flags == BlockFlags.F_IGN_PASSABLE) {
+            return null;
+        }
         // minX, minY, minZ, maxX, maxY, maxZ
 
         // TODO: Want to maintain a list with manual entries or at least half / full blocks ?
@@ -75,16 +81,16 @@ public class BlockCacheBukkit extends BlockCache {
             for (final Entity other : entity.getNearbyEntities(2.0, 2.0, 2.0)){
                 final EntityType type = other.getType();
                 if (!MaterialUtil.isBoat(type) && type != EntityType.SHULKER){ //  && !(other instanceof Minecart)) 
-                    continue; 
+                    continue;
                 }
                 final double locY = entity.getLocation(useLoc).getY();
                 useLoc.setWorld(null);
                 if (Math.abs(locY - minY) < 0.7){
                     // TODO: A "better" estimate is possible, though some more tolerance would be good. 
-                    return true; 
+                    return true;
                 }
                 else return false;
-            }		
+            }
         }
         catch (Throwable t){
             // Ignore exceptions (Context: DisguiseCraft).

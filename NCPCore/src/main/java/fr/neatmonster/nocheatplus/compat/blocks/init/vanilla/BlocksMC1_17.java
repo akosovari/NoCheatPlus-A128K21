@@ -91,31 +91,9 @@ public class BlocksMC1_17 implements BlockPropertiesSetup {
         BlockInit.setPropsAs("DEEPSLATE_TILE_SLAB", Material.COBBLED_DEEPSLATE);
 
         // Copper Blocks
-        for (Material mat : MaterialUtil.COPPER_BLOCKS) {
+        for (Material mat : MaterialUtil.ALL_REFINED_COPPER_BLOCKS) {
             BlockInit.setPropsAs(mat, Material.IRON_ORE);
         }
-
-        // Copper stairs
-        BlockInit.setPropsAs("CUT_COPPER_STAIRS", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("EXPOSED_CUT_COPPER_STAIRS", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("WEATHERED_CUT_COPPER_STAIRS", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("OXIDIZED_CUT_COPPER_STAIRS", Material.COPPER_BLOCK);
-        // Copper slabs
-        BlockInit.setPropsAs("CUT_COPPER_SLAB", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("EXPOSED_CUT_COPPER_SLAB", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("WEATHERED_CUT_COPPER_SLAB", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("OXIDIZED_CUT_COPPER_SLAB", Material.COPPER_BLOCK);
-
-        // Waxed Copper stairs
-        BlockInit.setPropsAs("WAXED_CUT_COPPER_STAIRS", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("WAXED_EXPOSED_CUT_COPPER_STAIRS", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("WAXED_WEATHERED_CUT_COPPER_STAIRS", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("WAXED_OXIDIZED_CUT_COPPER_STAIRS", Material.COPPER_BLOCK);
-        // Waxed Copper slabs
-        BlockInit.setPropsAs("WAXED_CUT_COPPER_SLAB", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("WAXED_EXPOSED_CUT_COPPER_SLAB", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("WAXED_WEATHERED_CUT_COPPER_SLAB", Material.COPPER_BLOCK);
-        BlockInit.setPropsAs("WAXED_OXIDIZED_CUT_COPPER_SLAB", Material.COPPER_BLOCK);
 
         // Flower Azalea
         BlockProperties.setBlockProps("AZALEA", BlockProperties.instantType);
@@ -134,7 +112,7 @@ public class BlocksMC1_17 implements BlockPropertiesSetup {
         BlockFlags.addFlags("CAVE_VINES_PLANT", BlockFlags.F_CLIMBABLE);
         
         BlockProperties.setBlockProps("HANGING_ROOTS", BlockProperties.instantType);
-        BlockProperties.setBlockProps("ROOTED_DIRT", new BlockProperties.BlockProps(BlockProperties.noTool, 0.5f));
+        BlockProperties.setBlockProps("ROOTED_DIRT", new BlockProperties.BlockProps(BlockProperties.woodSpade, 0.5f));
 
         //Dripstone
         BlockProperties.setBlockProps("DRIPSTONE_BLOCK", new BlockProperties.BlockProps(BlockProperties.woodPickaxe, 1.5f, true));
@@ -163,7 +141,11 @@ public class BlocksMC1_17 implements BlockPropertiesSetup {
 
         //Other blocks
         BlockProperties.setBlockProps("CALCITE", new BlockProperties.BlockProps(BlockProperties.woodPickaxe, 0.75f, true));
-        BlockProperties.setBlockProps("TUFF", new BlockProperties.BlockProps(BlockProperties.woodPickaxe, 1.5f, true));
+
+        // Tuff
+        for (Material mat : MaterialUtil.ALL_TUFF) {
+            BlockProperties.setBlockProps(mat, new BlockProperties.BlockProps(BlockProperties.woodPickaxe, 1.5f, true));
+        }
         BlockFlags.setBlockFlags("POWDER_SNOW", BlockFlags.F_POWDERSNOW | BlockFlags.F_IGN_PASSABLE | BlockFlags.F_GROUND | BlockFlags.F_GROUND_HEIGHT);
         BlockProperties.setBlockProps("POWDER_SNOW", new BlockProperties.BlockProps(BlockProperties.noTool, 0.25f));
         BlockInit.setPropsAs("POWDER_SNOW_CAULDRON", Material.CAULDRON);

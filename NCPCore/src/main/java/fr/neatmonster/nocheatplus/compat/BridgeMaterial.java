@@ -233,7 +233,7 @@ public class BridgeMaterial {
     public static final Material FIREWORK_ROCKET = getFirst("firework_rocket", "firework");
 
     /** Passable (long) grass block. */
-    public static final Material GRASS = getFirstNotNull("long_grass", "grass");
+    public static final Material GRASS = getFirstNotNull("short_grass", "long_grass", "grass");
 
     /** Classic dirt-like grass block. */
     public static final Material GRASS_BLOCK = getFirstNotNull("grass_block", "grass");
@@ -389,6 +389,33 @@ public class BridgeMaterial {
                 final Material value = entry.getValue();
                 if (isBlock == AlmostBoolean.MAYBE || !(isBlock.decide() ^ value.isBlock())) {
                     res.add(value);
+                }
+            }
+        }
+        return res;
+    }
+
+    public static Set<Material> getByContains(final AlmostBoolean isBlock, final Collection<String> contains, final String... excludeContains) {
+        final Set<Material> res = new LinkedHashSet<Material>();
+        final List<String> useExcludeContains = new LinkedList<String>();
+        for (final String exclude : excludeContains) {
+            useExcludeContains.add(exclude.toLowerCase());
+        }
+        for (final Entry<String, Material> entry : all.entrySet()) {
+            final String key = entry.getKey();
+            for (String s : contains) {
+                if (key.contains(s)) {
+                    final Material value = entry.getValue();
+                    if (isBlock == AlmostBoolean.MAYBE || !(isBlock.decide() ^ value.isBlock())) {
+                        boolean match = true;
+                        for (final String exclude : useExcludeContains) {
+                            if (key.contains(exclude)) {
+                                match = false;
+                                break;
+                            }
+                        }
+                        if (match) res.add(value);
+                    }
                 }
             }
         }

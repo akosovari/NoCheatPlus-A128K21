@@ -36,17 +36,17 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.data.type.BubbleColumn;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.potion.PotionEffectType;
 
 import fr.neatmonster.nocheatplus.NCPAPIProvider;
 import fr.neatmonster.nocheatplus.checks.moving.util.MovingUtil;
 import fr.neatmonster.nocheatplus.compat.AlmostBoolean;
 import fr.neatmonster.nocheatplus.compat.Bridge1_13;
 import fr.neatmonster.nocheatplus.compat.Bridge1_9;
+import fr.neatmonster.nocheatplus.compat.BridgeEnchant;
 import fr.neatmonster.nocheatplus.compat.BridgeMaterial;
+import fr.neatmonster.nocheatplus.compat.BridgePotionEffect;
 import fr.neatmonster.nocheatplus.compat.MCAccess;
 import fr.neatmonster.nocheatplus.compat.blocks.BlockPropertiesSetup;
 import fr.neatmonster.nocheatplus.compat.blocks.init.BlockInit;
@@ -784,6 +784,10 @@ public class BlockProperties {
         return (BlockFlags.getBlockFlags(mat) & BlockFlags.F_WATER_PLANT) != 0;
     }
 
+    public static final boolean isDoor(final Material mat) {
+        return MaterialUtil.ALL_DOORS.contains(mat);
+    }
+
     /** Liquid height if no solid/full blocks are above. */
     protected static final double LIQUID_HEIGHT_LOWERED = 8/9f;
 
@@ -1176,7 +1180,7 @@ public class BlockProperties {
             BlockFlags.setFlag(mat, BlockFlags.F_PASSABLE_X4 | BlockFlags.F_VARIABLE);
         }
         for (final Material mat : MaterialUtil.WOODEN_TRAP_DOORS) {
-            BlockFlags.setFlag(mat, BlockFlags.F_PASSABLE_X4 | BlockFlags.F_VARIABLE);
+            BlockFlags.setFlag(mat, BlockFlags.F_VARIABLE);
         }
         
         // Blocks that vary with redstone or interaction.
@@ -1221,11 +1225,6 @@ public class BlockProperties {
         // Flexible ground (height):
         // 1.10.2 +- client uses the reported height.
         for (final Material mat : new Material[]{BridgeMaterial.FARMLAND,}) {
-            BlockFlags.setFlag(mat, BlockFlags.F_GROUND_HEIGHT);
-        }
-
-        // Issues standing on with F_PASSABLE_X4. Note getGroundMinHeight.
-        for (Material mat : MaterialUtil.WOODEN_TRAP_DOORS) {
             BlockFlags.setFlag(mat, BlockFlags.F_GROUND_HEIGHT);
         }
 
@@ -1615,7 +1614,7 @@ public class BlockProperties {
 
         // Shulker boxes
         for (Material mat : MaterialUtil.SHULKER_BOXES) {
-            BlockProperties.setBlockProps(mat, new BlockProps(BlockProperties.woodPickaxe, 6f));
+            BlockProperties.setBlockProps(mat, new BlockProps(BlockProperties.woodPickaxe, 2f));
             BlockFlags.setBlockFlags(mat, BlockFlags.F_SOLID | BlockFlags.F_GROUND);
         }
 
@@ -1933,11 +1932,11 @@ public class BlockProperties {
         blockCache.cleanup();
         pLoc.cleanup();
         // Haste (faster digging).
-        final double haste = PotionUtil.getPotionEffectAmplifier(player, PotionEffectType.FAST_DIGGING);
-        final double fatigue = PotionUtil.getPotionEffectAmplifier(player, PotionEffectType.SLOW_DIGGING);
+        final double haste = PotionUtil.getPotionEffectAmplifier(player, BridgePotionEffect.HASTE);
+        final double fatigue = PotionUtil.getPotionEffectAmplifier(player, BridgePotionEffect.MINING_FATIGUE);
         final double conduit = Bridge1_13.getConduitPowerAmplifier(player);
         return getBreakingDuration(blockId, itemInHand, onGround, inWater,
-                helmet != null && helmet.containsEnchantment(Enchantment.WATER_WORKER), 
+                helmet != null && helmet.containsEnchantment(BridgeEnchant.AQUA_AFFINITY), 
                 Double.isInfinite(haste) ? 0 : 1 + (int) haste, 
                 Double.isInfinite(fatigue) ? 0 : 1 + (int) fatigue,
                 Double.isInfinite(conduit) ? 0 : 1 + (int) conduit        
@@ -1974,8 +1973,8 @@ public class BlockProperties {
         }
         else {
             int efficiency = 0;
-            if (itemInHand.containsEnchantment(Enchantment.DIG_SPEED)) {
-                efficiency = itemInHand.getEnchantmentLevel(Enchantment.DIG_SPEED);
+            if (itemInHand.containsEnchantment(BridgeEnchant.EFFICIENCY)) {
+                efficiency = itemInHand.getEnchantmentLevel(BridgeEnchant.EFFICIENCY);
             }
             return getBreakingDuration(blockId, getBlockProps(blockId), getToolProps(itemInHand.getType()), 
                                        onGround, inWater, aquaAffinity, efficiency, haste, fatigue, conduit);
@@ -2334,7 +2333,7 @@ public class BlockProperties {
     public static boolean isValidTool(final Material blockType, final ItemStack itemInHand) {
         final BlockProps blockProps = getBlockProps(blockType);
         final ToolProps toolProps = getToolProps(itemInHand);
-        final int efficiency = itemInHand == null ? 0 : itemInHand.getEnchantmentLevel(Enchantment.DIG_SPEED);
+        final int efficiency = itemInHand == null ? 0 : itemInHand.getEnchantmentLevel(BridgeEnchant.EFFICIENCY);
         return isValidTool(blockType, blockProps, toolProps, efficiency);
     }
 
@@ -2599,7 +2598,7 @@ public class BlockProperties {
         }
         // Basic flags and facing for trap door.
         final long flags1 = BlockFlags.getBlockFlags(access.getType(x, y, z));
-        if ((flags1 & BlockFlags.F_PASSABLE_X4) == 0) {
+        if (!MaterialUtil.ALL_TRAP_DOORS.contains(access.getType(x, y, z))) {
             return false;
         }
         // TODO: Really confine to trap door types (add a flag or something else)?
@@ -2650,8 +2649,7 @@ public class BlockProperties {
             return true;
         }
         else {
-            // TODO: BlockFlags.F_GROUND ?
-            return (flags & BlockFlags.F_SOLID) == 0;
+            return (flags & BlockFlags.F_GROUND) == 0;
         }
     }
 

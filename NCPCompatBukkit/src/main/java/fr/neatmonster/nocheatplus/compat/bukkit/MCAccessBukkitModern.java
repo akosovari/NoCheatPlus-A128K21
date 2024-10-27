@@ -112,7 +112,7 @@ public class MCAccessBukkitModern extends MCAccessBukkit {
     private static final BukkitShapeModel MODEL_CAMPFIRE = new BukkitStatic(0.0, 0.4375);
     private static final BukkitShapeModel MODEL_BAMBOO = new BukkitBamboo();
     private static final BukkitShapeModel MODEL_WATER_PLANTS = new BukkitWaterPlant();
-    private static final BukkitShapeModel MODEL_LILY_PAD = new BukkitStatic(0.09375);
+    private static final BukkitShapeModel MODEL_LILY_PAD = new BukkitStatic(0.0625, 0.09375);
     private static final BukkitShapeModel MODEL_FLOWER_POT = new BukkitStatic(0.3125, 0.375);
     private static final BukkitShapeModel MODEL_LANTERN = new BukkitLantern();
     private static final BukkitShapeModel MODEL_CONDUIT = new BukkitStatic(0.3125, 0.3125, 0.3125, 0.6875, 0.6875, 0.6875);
@@ -150,7 +150,7 @@ public class MCAccessBukkitModern extends MCAccessBukkit {
 
     @Override
     public String getMCVersion() {
-        return "1.13-1.20|?";
+        return "1.13-1.21|?";
     }
 
     @Override
@@ -485,6 +485,10 @@ public class MCAccessBukkitModern extends MCAccessBukkit {
         mt = BridgeMaterial.getBlock("mud");
         if (mt != null) addModel(mt, MODEL_XZ100_HEIGHT8_7);
 
+        // Heavy core
+        mt = BridgeMaterial.getBlock("heavy_core");
+        if (mt != null) addModel(mt, MODEL_GROUND_HEAD);
+
         // Sort to processed by flags.
         for (final Material mat : Material.values()) {
             final long flags = BlockFlags.getBlockFlags(mat);
@@ -536,6 +540,8 @@ public class MCAccessBukkitModern extends MCAccessBukkit {
                     if (damageSource == null) {
                         // Fail, deal generic damage
                         BridgeHealth.damage(player, damage);
+                        // Disable class to prevent continuous damage
+                        reflectDamageSources = null;
                         return;
                     }
                 }

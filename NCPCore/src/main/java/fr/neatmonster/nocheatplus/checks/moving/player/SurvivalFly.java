@@ -52,6 +52,7 @@ import fr.neatmonster.nocheatplus.compat.Bridge1_13;
 import fr.neatmonster.nocheatplus.compat.Bridge1_9;
 import fr.neatmonster.nocheatplus.compat.BridgeEnchant;
 import fr.neatmonster.nocheatplus.compat.BridgeMisc;
+import fr.neatmonster.nocheatplus.compat.BridgePotionEffect;
 import fr.neatmonster.nocheatplus.compat.versions.ServerVersion;
 import fr.neatmonster.nocheatplus.compat.blocks.changetracker.BlockChangeTracker;
 import fr.neatmonster.nocheatplus.compat.blocks.changetracker.BlockChangeTracker.Direction;
@@ -1196,6 +1197,15 @@ public class SurvivalFly extends Check {
             friction = 0.0;
         }
 
+        // InvalidUse packet
+        else if (data.invalidItemUse && (!checkPermissions || !pData.hasPermission(Permissions.MOVING_SURVIVALFLY_BLOCKING, player))) {
+            tags.add("invalidate_use");
+            data.invalidItemUse = false;
+            hAllowedDistance = 0.0;
+            useBaseModifiers = false;
+            friction = 0.0;
+        }
+
         // Collision tolerance for entities (1.9+)
         else if (ServerIsAtLeast1_9 && CollisionUtil.isCollidingWithEntities(player, true) 
                 && hAllowedDistance < 0.35 && data.liftOffEnvelope == LiftOffEnvelope.NORMAL) {
@@ -1444,7 +1454,7 @@ public class SurvivalFly extends Check {
                 if (sprinting && hAllowedDistance < 0.29 && cc.sfSlownessSprintHack 
                     && (
                         // TODO: Test/balance thresholds (walkSpeed, attrMod).
-                        player.hasPotionEffect(PotionEffectType.SLOW)
+                        player.hasPotionEffect(BridgePotionEffect.SLOWNESS)
                         || data.walkSpeed < Magic.DEFAULT_WALKSPEED
                         || attrMod < 1.0
                     )) {

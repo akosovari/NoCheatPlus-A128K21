@@ -23,6 +23,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -37,6 +38,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.EntityPortalEnterEvent;
 import org.bukkit.event.entity.EntityToggleGlideEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
@@ -54,7 +57,6 @@ import org.bukkit.event.player.PlayerToggleSprintEvent;
 import org.bukkit.event.player.PlayerVelocityEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
 import fr.neatmonster.nocheatplus.NCPAPIProvider;
@@ -91,8 +93,10 @@ import fr.neatmonster.nocheatplus.compat.Bridge1_13;
 import fr.neatmonster.nocheatplus.compat.Bridge1_17;
 import fr.neatmonster.nocheatplus.compat.Bridge1_9;
 import fr.neatmonster.nocheatplus.compat.BridgeEnchant;
+import fr.neatmonster.nocheatplus.compat.BridgeEntityType;
 import fr.neatmonster.nocheatplus.compat.BridgeHealth;
 import fr.neatmonster.nocheatplus.compat.BridgeMisc;
+import fr.neatmonster.nocheatplus.compat.BridgePotionEffect;
 import fr.neatmonster.nocheatplus.compat.Folia;
 import fr.neatmonster.nocheatplus.compat.MCAccess;
 import fr.neatmonster.nocheatplus.compat.blocks.changetracker.BlockChangeTracker;
@@ -391,6 +395,20 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
         if (cc.enforceLocation) playersEnforce.add(player.getName());
         useChangeWorldLoc.setWorld(null);
     }
+    
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onWindChargeExplode(EntityExplodeEvent e) {
+        if (e.getEntity().getType() == BridgeEntityType.WIND_CHARGE) {
+            Location loc = e.getLocation();
+            for (Entity affectedPlayer : loc.getWorld().getNearbyEntities(loc, 1.2, 1.2, 1.2, (entity) -> entity.getType() == EntityType.PLAYER)) {
+                final Player player = (Player) affectedPlayer;
+                final IPlayerData pData = DataManager.getPlayerData(player);
+                final MovingData data = pData.getGenericInstance(MovingData.class);
+                if (!pData.isCheckActive(CheckType.MOVING, player)) continue;
+                data.noFallCurrentLocOnWindChargeHit = player.getLocation().clone();
+            }
+        }
+    }
 
 
     /**
@@ -405,6 +423,7 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
         final Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.CREATIVE || event.getNewGameMode() == GameMode.CREATIVE) {
             final MovingData data = DataManager.getGenericInstance(player, MovingData.class);
+            data.clearWindChargeImpulse();
             data.clearFlyData();
             data.clearPlayerMorePacketsData();
             // TODO: Set new set back if any fly check is activated.
@@ -548,6 +567,16 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
             data.joinOrRespawn = false;
             return;
         }
+
+        // Change world miss. Not efficient, require first move event fire to know 
+        if (Folia.isFoliaServer()) {
+            if (data.currentWorldToChange != null && !data.currentWorldToChange.equals(from.getWorld())) {
+                final PlayerChangedWorldEvent e = new PlayerChangedWorldEvent(player, data.currentWorldToChange);
+                Bukkit.getPluginManager().callEvent(e);
+            }
+            data.currentWorldToChange = from.getWorld();
+        }
+
 
 
         //////////////////////////////////////////////////////////////
@@ -745,6 +774,14 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
             }
         }
 
+        ////////////////////////////////////
+        // Wind Charge handling 1.21+     //
+        ////////////////////////////////////
+        // TODO: Incorrect but safe for now
+        // TODO: Missing case: If player taken another explosion after wind_charge, do reset impulse
+        if (data.timeRiptiding + 1500 > System.currentTimeMillis() || pFrom.isInLiquid() || pFrom.isOnClimbable() || Bridge1_9.isGlidingWithElytra(player)) {
+            data.clearWindChargeImpulse();
+        }
 
         //////////////////////////////////////////////
         // HOT FIX - for VehicleLeaveEvent missing. //
@@ -1860,7 +1897,8 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
         boolean cancel = false;
         // Ender pearl into blocks.
         if (cause == TeleportCause.ENDER_PEARL) {
-            if (pData.getGenericInstance(CombinedConfig.class).enderPearlCheck && !BlockProperties.isPassable(to)) { // || !BlockProperties.isOnGroundOrResetCond(player, to, 1.0)) {
+            if (pData.getGenericInstance(CombinedConfig.class).enderPearlCheck && !BlockProperties.isPassable(to) && 
+                    blockChangeTracker.getBlockChangeEntry(null, TickTask.getTick(), to.getWorld().getUID(), to.getBlockX(), to.getBlockY(), to.getBlockZ(), null) == null) { // || !BlockProperties.isOnGroundOrResetCond(player, to, 1.0)) {
                 // Not check on-ground: Check the second throw.
                 // TODO: Bounding box check or onGround as replacement?
                 cancel = true;
@@ -1973,6 +2011,7 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
             onPlayerTeleportMonitorNullTarget(player, event, to, data, pData);
             return;
         }
+        data.clearWindChargeImpulse();
         final MovingConfig cc = pData.getGenericInstance(MovingConfig.class);
         // Detect our own player set backs.
         if (data.hasTeleported() && onPlayerTeleportMonitorHasTeleported(player, event, to, data, cc, pData)) {
@@ -2908,7 +2947,7 @@ public class MovingListener extends CheckListener implements TickListener, IRemo
         if (!Double.isInfinite(speed)) {
             builder.append("(e_speed=" + (speed + 1) + ")");
         }
-        final double slow = PotionUtil.getPotionEffectAmplifier(player, PotionEffectType.SLOW);
+        final double slow = PotionUtil.getPotionEffectAmplifier(player, BridgePotionEffect.SLOWNESS);
         if (!Double.isInfinite(slow)) {
             builder.append("(e_slow=" + (slow + 1) + ")");
         }

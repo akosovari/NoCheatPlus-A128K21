@@ -16,6 +16,8 @@ package fr.neatmonster.nocheatplus.compat;
 
 import java.util.UUID;
 
+import org.bukkit.NamespacedKey;
+
 import fr.neatmonster.nocheatplus.utilities.IdUtil;
 
 // TODO: Auto-generated Javadoc
@@ -26,6 +28,17 @@ public class AttribUtil {
     
     /** The Constant ID_SPRINT_BOOST. */
     public static final UUID ID_SPRINT_BOOST = IdUtil.UUIDFromString("662A6B8D-DA3E-4C1C-8813-96EA6097278D");
+    public static final NamespacedKey NSID_SPRINT_BOOST;
+
+    static {
+        NamespacedKey springBoost;
+        try {
+            springBoost = NamespacedKey.minecraft("sprinting");
+        } catch (NoClassDefFoundError ignored) {
+            springBoost = null;
+        }
+        NSID_SPRINT_BOOST = springBoost;
+    }
 
     /**
      * Get a multiplier for an AttributeModifier.

@@ -157,6 +157,7 @@ public class MovingData extends ACheckData implements IDataOnRemoveSubCheckData,
     public long releaseItemTime = 0;
     /** Detection flag */
     public boolean isHackingRI = false;
+    public boolean invalidItemUse = false;
     /** Keep track of hopping while using items */
     public int noSlowHop = 0;
 
@@ -202,6 +203,7 @@ public class MovingData extends ACheckData implements IDataOnRemoveSubCheckData,
     private Location setBack = null;
     /** Telepot location, shared between fly checks */
     private Location teleported = null;
+    public World currentWorldToChange = null;
 
 
 
@@ -233,6 +235,8 @@ public class MovingData extends ACheckData implements IDataOnRemoveSubCheckData,
     public double noFallMaxY = 0;
     /** Indicate that NoFall is not to use next damage event for checking on-ground properties. */ 
     public boolean noFallSkipAirCheck = false;
+    /** Last coordinate from when the player was affected wind charge explosion */
+    public Location noFallCurrentLocOnWindChargeHit = null;
 
     // *----------Data of the SurvivalFly check----------*
     /** Default lift-off envelope, used after resetting. <br> TODO: Test, might be better ground. */
@@ -685,6 +689,10 @@ public class MovingData extends ACheckData implements IDataOnRemoveSubCheckData,
         noFallFallDistance = 0;
         noFallMaxY = BlockProperties.getMinWorldY();
         noFallSkipAirCheck = false;
+    }
+    
+    public void clearWindChargeImpulse() {
+        noFallCurrentLocOnWindChargeHit = null;
     }
 
 
